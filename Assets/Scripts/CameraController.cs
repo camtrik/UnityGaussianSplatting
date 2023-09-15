@@ -5,7 +5,7 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     public float moveSpeed = 5.0f;
-    public float rotationSpeed = 200.0f;
+    public float rotationSpeed = 5.0f;
     // Start is called before the first frame update
     void Start()
     {
@@ -34,6 +34,8 @@ public class CameraController : MonoBehaviour
         // rotation by keyboard
         float horizontalKeyRotation = 0;
         float verticalKeyRotation = 0;
+        float rollKeyRotation = 0;
+
         if (Input.GetKey(KeyCode.J)) // left
             horizontalKeyRotation = -rotationSpeed * Time.deltaTime;
         else if (Input.GetKey(KeyCode.L)) // right
@@ -44,8 +46,14 @@ public class CameraController : MonoBehaviour
         else if (Input.GetKey(KeyCode.K)) // down
             verticalKeyRotation = -rotationSpeed * Time.deltaTime;
 
+        if (Input.GetKey(KeyCode.U)) // roll left
+            rollKeyRotation = rotationSpeed * Time.deltaTime;
+        else if (Input.GetKey(KeyCode.O)) // roll right
+            rollKeyRotation = -rotationSpeed * Time.deltaTime;
+
         transform.Rotate(Vector3.up, horizontalKeyRotation);
         transform.Rotate(Vector3.left, verticalKeyRotation);
+        transform.Rotate(Vector3.forward, rollKeyRotation);
 
     }
 }
