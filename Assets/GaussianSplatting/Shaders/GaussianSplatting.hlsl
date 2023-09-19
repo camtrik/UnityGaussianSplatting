@@ -136,7 +136,6 @@ struct SplatSHData
 half3 ShadeSH(SplatSHData splat, half3 dir, int shOrder)
 {
     dir *= -1;
-    dir.z *= -1;
 
     half x = dir.x, y = dir.y, z = dir.z;
 
@@ -365,5 +364,12 @@ SplatData LoadSplatDataRaw(uint2 coord2)
     s.sh.sh15   = LoadSplatShTex(coord, _TexSHF);
     return s;
 }
+
+struct SplatViewData
+{
+    float4 pos;
+    float4 conicRadius;
+    uint2 color; // 4xFP16
+};
 
 #endif // GAUSSIAN_SPLATTING_HLSL

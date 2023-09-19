@@ -16,17 +16,6 @@ CGPROGRAM
 #pragma require compute
 #pragma use_dxc metal vulkan
 
-//@TODO: cube face flip opts from https://twitter.com/SebAaltonen/status/1315985267258519553
-static const int kCubeIndices[36] =
-{
-    0, 1, 2, 1, 3, 2,
-    4, 6, 5, 5, 6, 7,
-    0, 2, 4, 4, 2, 6,
-    1, 5, 3, 5, 7, 3,
-    0, 4, 1, 4, 5, 1,
-    2, 3, 6, 3, 7, 6
-};
-
 #include "UnityCG.cginc"
 #include "GaussianSplatting.hlsl"
 
@@ -54,7 +43,7 @@ v2f vert (uint vtxID : SV_VertexID, uint instID : SV_InstanceID)
 {
     v2f o;
     bool chunks = _DisplayChunks;
-	uint idx = kCubeIndices[vtxID];
+	uint idx = vtxID;
 	float3 localPos = float3(idx&1, (idx>>1)&1, (idx>>2)&1) * 2.0 - 1.0;
 
     float3 centerWorldPos = 0;
@@ -70,8 +59,10 @@ v2f vert (uint vtxID : SV_VertexID, uint instID : SV_InstanceID)
         boxSize *= _SplatScale;
 
         float3x3 splatRotScaleMat = CalcMatrixFromRotationScale(boxRot, boxSize);
+        splatRotScaleMat = mul((float3x3)unity_ObjectToWorld, splatRotScaleMat);
 
-        centerWorldPos = splat.pos * float3(1,1,-1);
+        centerWorldPos = splat.pos;
+        centerWorldPos = mul(unity_ObjectToWorld, float4(centerWorldPos,1)).xyz;
 
         o.col.rgb = saturate(splat.sh.col);
         o.col.a = saturate(splat.opacity);
@@ -84,11 +75,11 @@ v2f vert (uint vtxID : SV_VertexID, uint instID : SV_InstanceID)
         localPos = localPos * 0.5 + 0.5;
         SplatChunkInfo chunk = _SplatChunks[instID];
         localPos = lerp(chunk.boundsMin.pos, chunk.boundsMax.pos, localPos);
+        localPos = mul(unity_ObjectToWorld, float4(localPos,1)).xyz;
 
         o.col.rgb = palette((float)instID / (float)_SplatChunkCount, half3(0.5,0.5,0.5), half3(0.5,0.5,0.5), half3(1,1,1), half3(0.0, 0.33, 0.67));
         o.col.a = 0.1;
     }
-    localPos.z *= -1;
 
     float3 worldPos = centerWorldPos + localPos;
     o.vertex = UnityWorldToClipPos(worldPos);

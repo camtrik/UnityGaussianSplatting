@@ -24,9 +24,11 @@ since then it can use a faster sorting routine (DX11 should also work, but sorti
 
 <img align="right" src="Doc/shotAssetCreator.png" width="250px">
 
-Next up, **create some GaussianSplat assets**: open `Tools -> Create Gaussian Splat Asset` menu within Unity. In the dialog point it to
+Next up, **create some GaussianSplat assets**: open `Tools -> Gaussian Splats -> Create GaussianSplatAsset` menu within Unity. In the dialog point it to
 your gaussian splat "model" directory (it is expected to contain `cameras.json` and `point_cloud/iteration_7000/point_cloud.ply` inside of it,
-and be an actual Gaussian Splat model, not something else). Pick desired compression options and output folder, and press "Create Asset" button.
+and be an actual Gaussian Splat model, not something else).
+
+Pick desired compression options and output folder, and press "Create Asset" button.
 
 If everything was fine, there should be a GaussianSplat asset that has a bunch of data images next to it:
 
@@ -41,12 +43,17 @@ In the game object that has a `GaussianSplatRenderer` script, **point the Asset 
 There are various controls on the script to debug/visualize the data, as well as a slider to move game camera into one of asset's camera
 locations.
 
+The rendering takes game object transformation matrix into account; the official gaussian splat models seem to be all rotated by about
+-160 degrees around X axis, and mirrored around Z axis, so in the sample scene the object has such a transform set up, and the camera is setup as a
+child object.
+
+
 _That's it!_
 
 Wishlist that I may or might not do at some point:
-- [ ] Make it respect the game object transform
+- [x] Make it respect the game object transform
 - [ ] Make rendering faster (actual tiled compute shader rasterizer)
-- [ ] Look at ways to make the data sets smaller (both on-disk and in-memory)
+- [x] Look at ways to make the data sets smaller (both on-disk and in-memory) ([blog post](https://aras-p.info/blog/2023/09/13/Making-Gaussian-Splats-smaller/))
 - [x] Integrate better with "the rest" of rendering that might be in the scene (BiRP)
 - [ ] Maybe look at making it work in URP/HDRP? Not sure yet
 - [x] Make sorting faster (bitonic -> FidelityFX radix sort)
@@ -59,14 +66,19 @@ My own blog posts about all this _(so far... not that many!)_:
 
 ## Performance numbers:
 
-"bicycle" scene from the paper, with 6.1M splats and first camera in there, rendering at 1200x800 resolution:
+"bicycle" scene from the paper, with 6.1M splats and first camera in there, rendering at 1200x797 resolution,
+at "Medium" asset quality level (273MB asset file):
+
 * Windows (NVIDIA RTX 3080 Ti):
   * Official SBIR viewer: 7.4ms (135FPS). 4.8GB VRAM usage.
-  * Unity, DX12 or Vulkan: 13.4ms (75FPS) - 10.1ms rendering, 3.3ms sorting. 2.1GB VRAM usage.
-  * Unity, DX11: 21.8ms (46FPS) - 9.9ms rendering, 11.9ms sorting.
+  * Unity, DX12 or Vulkan: 12.6ms (79FPS) - 9.4ms rendering, 2.4ms sorting, 0.7ms splat view calc. 1.2GB VRAM usage.
+  * Unity, DX11: 20.8ms (48FPS) - 9.6ms rendering, 10.4ms sorting, 0.6ms splat view calc.
 * Mac (Apple M1 Max):
-  * Unity, Metal: 80.6ms (12FPS) - with FidelityFX GPU sort.
-  * Unity, Metal: 108ms (9FPS) - with bitonic GPU sort.
+  * Unity, Metal: 31.8ms (31FPS).
+
+Besides the gaussian splat asset that is loaded into GPU memory, currently this also needs about 48 bytes of GPU memory
+per splat (for sorting, caching view dependent data etc.).
+
 
 ## External Code Used
 
